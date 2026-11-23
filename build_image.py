@@ -105,6 +105,100 @@ def num_circle(draw, cx, cy, n, r=10):
     draw.text((cx - tw / 2, cy - size / 2 - 1), t, font=fnt, fill=WHITE)
 
 
+# ---------------------------------------------------------------- flags
+
+FLAG_W, FLAG_H = 30, 20
+
+
+def _bands(d, ix, iy, iw, ih, colors):
+    n = len(colors)
+    for i, col in enumerate(colors):
+        y0 = iy + ih * i // n
+        y1 = iy + ih * (i + 1) // n - 1
+        d.rectangle([ix, y0, ix + iw - 1, y1], fill=col)
+
+
+def draw_flag(d, kind, x, y, w=FLAG_W, h=FLAG_H):
+    """One small flat flag chip (or the COP31 globe) at (x, y)."""
+    if kind == "tw_kr":
+        draw_flag(d, "taiwan", x, y, 28, 18)
+        draw_flag(d, "korea", x + 32, y, 28, 18)
+        return
+    ix, iy, iw, ih = x + 1, y + 1, w - 2, h - 2
+    cx, cy = ix + iw // 2, iy + ih // 2
+    if kind == "globe":
+        d.ellipse([x, y, x + w, y + h], fill=(40, 110, 190))
+        d.ellipse([x + 6, y + 4, x + 14, y + 10], fill=(70, 170, 90))
+        d.ellipse([x + 16, y + 9, x + 24, y + 16], fill=(70, 170, 90))
+        d.ellipse([x + 8, y + 12, x + 13, y + 16], fill=(70, 170, 90))
+        d.ellipse([x, y, x + w, y + h], outline=(40, 40, 40), width=1)
+        return
+    if kind == "poland":
+        _bands(d, ix, iy, iw, ih, [WHITE, RED])
+    elif kind == "taiwan":
+        d.rectangle([ix, iy, ix + iw - 1, iy + ih - 1], fill=RED)
+        d.rectangle([ix, iy, ix + iw // 2, iy + ih // 2], fill=NAVY)
+        d.ellipse([ix + iw // 4 - 3, iy + ih // 4 - 3, ix + iw // 4 + 3,
+                   iy + ih // 4 + 3], fill=WHITE)
+    elif kind == "korea":
+        d.rectangle([ix, iy, ix + iw - 1, iy + ih - 1], fill=WHITE)
+        r = 5
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(0, 71, 160))
+        d.pieslice([cx - r, cy - r, cx + r, cy + r], 180, 360,
+                   fill=(205, 49, 60))
+        d.rectangle([ix + 2, iy + 2, ix + 7, iy + 4], fill=BLACK)
+        d.rectangle([ix + 2, iy + 5, ix + 7, iy + 7], fill=BLACK)
+        d.rectangle([ix + iw - 8, iy + ih - 7, ix + iw - 3, iy + ih - 5],
+                    fill=BLACK)
+        d.rectangle([ix + iw - 8, iy + ih - 4, ix + iw - 3, iy + ih - 2],
+                    fill=BLACK)
+    elif kind == "libya":
+        _bands(d, ix, iy, iw, ih, [RED, BLACK, (0, 122, 61)])
+        d.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=WHITE)
+    elif kind == "russia":
+        _bands(d, ix, iy, iw, ih, [WHITE, (0, 90, 160), RED])
+    elif kind == "ukraine":
+        _bands(d, ix, iy, iw, ih, [(0, 90, 160), (255, 213, 0)])
+    elif kind == "iran":
+        _bands(d, ix, iy, iw, ih, [(0, 122, 61), WHITE, RED])
+    elif kind == "usa":
+        d.rectangle([ix, iy, ix + iw - 1, iy + ih - 1], fill=WHITE)
+        for i in (0, 2, 4, 6):
+            y0 = iy + ih * i // 7
+            y1 = iy + ih * (i + 1) // 7 - 1
+            d.rectangle([ix, y0, ix + iw - 1, y1], fill=(178, 34, 52))
+        cw = iw * 9 // 20
+        chh = ih * 4 // 7
+        d.rectangle([ix, iy, ix + cw - 1, iy + chh - 1], fill=NAVY)
+        for dx, dy in ((3, 2), (9, 5), (6, 8)):
+            d.ellipse([ix + dx, iy + dy, ix + dx + 1, iy + dy + 1],
+                      fill=WHITE)
+    elif kind == "uk":
+        d.rectangle([ix, iy, ix + iw - 1, iy + ih - 1], fill=NAVY)
+        d.line([ix, iy, ix + iw - 1, iy + ih - 1], fill=WHITE, width=3)
+        d.line([ix + iw - 1, iy, ix, iy + ih - 1], fill=WHITE, width=3)
+        d.rectangle([cx - 3, iy, cx + 3, iy + ih - 1], fill=WHITE)
+        d.rectangle([ix, cy - 3, ix + iw - 1, cy + 3], fill=WHITE)
+        d.rectangle([cx - 1, iy, cx + 1, iy + ih - 1], fill=RED)
+        d.rectangle([ix, cy - 1, ix + iw - 1, cy + 1], fill=RED)
+    elif kind == "indonesia":
+        _bands(d, ix, iy, iw, ih, [RED, WHITE])
+    elif kind == "india":
+        _bands(d, ix, iy, iw, ih, [(255, 153, 51), WHITE, (19, 136, 8)])
+        d.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], fill=NAVY)
+    elif kind == "japan":
+        d.rectangle([ix, iy, ix + iw - 1, iy + ih - 1], fill=WHITE)
+        d.ellipse([cx - 5, cy - 5, cx + 5, cy + 5], fill=(188, 0, 45))
+    d.rectangle([x, y, x + w - 1, y + h - 1], outline=(40, 40, 40), width=1)
+
+
+FLAGS = {
+    1: "globe", 2: "poland", 3: "tw_kr", 4: "libya", 5: "russia",
+    6: "ukraine", 7: "iran", 8: "usa", 9: "uk", 10: "korea",
+    11: "indonesia", 12: "india", 13: "japan",
+}
+
+
 # ---------------------------------------------------------------- pictures
 
 def pic_cop31(d, x, y, w, h):
@@ -503,6 +597,7 @@ def build():
     for i, s in enumerate(HEROES):
         hx = 16 + i * (hw + 10)
         s["pic"](d, hx, hy, hw, 118)
+        draw_flag(d, FLAGS[s["n"]], hx + 4, hy + 4)
         chip(d, hx + 4, hy + 118 - 20, s["tag"], font(SANS_B, 10),
              s["tag_bg"], WHITE)
         cw = chip_width(d, s["cert"])
@@ -521,6 +616,7 @@ def build():
         sx = 16 + c * (sw_ + 8)
         syy = sy + r * (sh_ + 6)
         s["pic"](d, sx, syy, sw_, 46)
+        draw_flag(d, FLAGS[s["n"]], sx + 3, syy + 3)
         chip(d, sx + 3, syy + 46 - 16, s["tag"], font(SANS_B, 8),
              s["tag_bg"], WHITE)
         cw2 = chip_width(d, s["cert"])
