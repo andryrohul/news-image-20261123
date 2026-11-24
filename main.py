@@ -1,53 +1,54 @@
-"""Deliver the finished front page for the 23 November 2026 news image entry.
+"""Ship the finished front page to the grader's output folder.
 
-The grader runs this file and expects exactly one artefact: entry.png,
-placed inside the folder named by MAKEFUN_OUTPUT_DIR.  Nothing is drawn
-here and nothing is fetched; the picture already exists beside this file
-and is simply handed over, byte for byte.
+The picture itself is drawn by build_image.py at build time; this file only
+hands the finished entry.png over to the directory the grader names in
+MAKEFUN_OUTPUT_DIR. Standard library only: no drawing, no network.
 """
 
 import os
+import shutil
 import sys
+from pathlib import Path
 
-PICTURE_NAME = "entry.png"
-CHUNK = 1024 * 64
-
-
-def _fail(message):
-    print("main.py: " + message, file=sys.stderr)
-    return 2
+SOURCE_NAME = "entry.png"
 
 
-def _hand_over(source, target_folder):
-    target_folder.mkdir(parents=True, exist_ok=True)
-    destination = target_folder / PICTURE_NAME
-    moved = 0
-    with source.open("rb") as reader, destination.open("wb") as writer:
-        while True:
-            piece = reader.read(CHUNK)
-            if not piece:
-                break
-            writer.write(piece)
-            moved += len(piece)
-    return destination, moved
+def _die(message):
+    sys.stderr.write("main.py: " + message + "\n")
+    return 1
+
+
+def _locate_source():
+    here = Path(__file__).resolve().parent
+    candidate = here / SOURCE_NAME
+    if not candidate.exists():
+        return None
+    return candidate
+
+
+def _output_folder():
+    raw = os.environ.get("MAKEFUN_OUTPUT_DIR", "").strip()
+    if not raw:
+        return None
+    return Path(raw)
 
 
 def run():
-    wanted = os.environ.get("MAKEFUN_OUTPUT_DIR")
-    if not wanted:
-        return _fail("MAKEFUN_OUTPUT_DIR is not set, so there is nowhere to put entry.png.")
-
-    here = os.path.dirname(os.path.abspath(__file__))
-    from pathlib import Path
-
-    source = Path(here) / PICTURE_NAME
-    if not source.is_file():
-        return _fail("entry.png is missing next to main.py.")
-
-    destination, moved = _hand_over(source, Path(wanted))
-    print("delivered {} ({} bytes)".format(destination, moved))
+    source = _locate_source()
+    if source is None:
+        return _die("entry.png is missing next to main.py; nothing to "
+                    "deliver.")
+    folder = _output_folder()
+    if folder is None:
+        return _die("MAKEFUN_OUTPUT_DIR is not set, so there is nowhere to "
+                    "put entry.png.")
+    folder.mkdir(parents=True, exist_ok=True)
+    target = folder / SOURCE_NAME
+    shutil.copyfile(source, target)
+    size = target.stat().st_size
+    print("delivered " + str(target) + " (" + str(size) + " bytes)")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(run())
+    raise SystemExit(run())
